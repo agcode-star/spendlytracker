@@ -1,0 +1,228 @@
+/* ------------------------------------------------------------------ */
+/* Hero — centered single-column layout                                */
+/* ------------------------------------------------------------------ */
+
+.hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 2rem 5rem;
+    max-width: 860px;
+    margin: 0 auto;
+    gap: 0;
+}
+
+.hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Badge */
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #e6f4ee;
+    border: 1px solid #b4d9c6;
+    color: #2a6645;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1.75rem;
+}
+
+.hero-badge-dot {
+    width: 7px;
+    height: 7px;
+    background: #30a06a;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Title */
+.hero-title {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+    font-style: normal;
+}
+
+.hero-title em {
+    font-style: italic;
+    color: #30a06a;
+    display: block;
+}
+
+/* Subtitle */
+.hero-subtitle {
+    font-size: 1.1rem;
+    max-width: 520px;
+    text-align: center;
+    margin-bottom: 2.25rem;
+}
+
+/* Buttons */
+.hero-actions {
+    gap: 0.75rem;
+}
+
+.hero .btn-primary {
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.btn-dark {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.btn-dark:hover { background: var(--accent); }
+
+/* ------------------------------------------------------------------ */
+/* Browser-window mock card                                            */
+/* ------------------------------------------------------------------ */
+
+.hero-browser {
+    width: 100%;
+    max-width: 720px;
+    margin-top: 3.5rem;
+    background: #edeae3;
+    border-radius: 16px;
+    box-shadow: 0 12px 56px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 18px 10px;
+}
+
+.browser-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.dot-red    { background: #ff5f57; }
+.dot-yellow { background: #febc2e; }
+.dot-green  { background: #28c840; }
+
+.browser-content {
+    padding: 4px 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Stat cards row */
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #dedad2;
+    border-radius: 10px;
+    padding: 16px 18px;
+    text-align: left;
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 0.35rem;
+    font-weight: 400;
+}
+
+.stat-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.15;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.02em;
+}
+
+.stat-change {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.change-red   { color: #e53935; }
+.change-green { color: #30a06a; }
+.change-muted { color: #999; }
+
+/* Category bars */
+.category-bars {
+    background: #ffffff;
+    border: 1px solid #dedad2;
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+}
+
+.cat-bar-row {
+    display: grid;
+    grid-template-columns: 54px 1fr;
+    align-items: center;
+    gap: 14px;
+}
+
+.cat-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #444;
+    text-align: right;
+}
+
+.cat-track {
+    height: 8px;
+    background: #e5e2db;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.cat-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.fill-orange { background: #e8a020; }
+.fill-blue   { background: #4a90d9; }
+.fill-purple { background: #7c6fcd; }
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+    .stat-cards { grid-template-columns: 1fr; }
+    .hero-browser { margin-top: 2.5rem; }
+}
