@@ -19,6 +19,16 @@ def test_get_register_renders(client):
     assert b"Create your account" in resp.data
 
 
+def test_logged_in_user_redirected_from_register(client):
+    # A signed-in user visiting /register is bounced to the landing page.
+    with client.session_transaction() as sess:
+        sess["user_id"] = 1
+        sess["name"] = "Test User"
+    resp = client.get("/register", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/")
+
+
 def test_post_valid_creates_user_and_redirects(client):
     resp = client.post(
         "/register",

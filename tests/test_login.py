@@ -90,6 +90,16 @@ def test_logout_clears_session_and_redirects(client):
         assert "user_id" not in sess
 
 
+def test_logged_in_user_redirected_from_login(client):
+    # A signed-in user visiting /login is bounced to the landing page.
+    with client.session_transaction() as sess:
+        sess["user_id"] = 1
+        sess["name"] = "Test User"
+    resp = client.get("/login", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/")
+
+
 def test_navbar_reflects_session(client):
     # Logged out: landing shows the public links, not "Sign out".
     resp = client.get("/")
