@@ -1,0 +1,238 @@
+/* profile.css — styles for the profile page (Step 4).
+   Colours come from CSS variables only. The single place hex literals are
+   allowed is the :root category-colour tokens below. */
+
+:root {
+    /* Per-category badge colours (background / text). */
+    --cat-food: #fdecea;            --cat-food-ink: #b5402f;
+    --cat-transport: #e8f0fb;       --cat-transport-ink: #2f5fa3;
+    --cat-bills: #f1ecfb;           --cat-bills-ink: #6a4fb0;
+    --cat-health: #e8f0eb;          --cat-health-ink: #1a472a;
+    --cat-entertainment: #fdf3e3;   --cat-entertainment-ink: #9a6412;
+    --cat-shopping: #fce9f3;        --cat-shopping-ink: #a83472;
+    --cat-other: #eef0f2;           --cat-other-ink: #5a6470;
+}
+
+/* ---------- Page layout ---------- */
+.profile-wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--ink);
+    margin: 0.5rem 0;
+}
+
+.profile-section-title [data-lucide] {
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+}
+
+/* ---------- User info card ---------- */
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.profile-avatar {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+}
+
+.profile-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.profile-email {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+}
+
+.profile-meta {
+    color: var(--ink-faint);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+/* ---------- Summary stats ---------- */
+.profile-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.profile-stat {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+}
+
+.profile-stat-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.profile-stat-label [data-lucide] {
+    width: 16px;
+    height: 16px;
+}
+
+.profile-stat-value {
+    margin-top: 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Transaction table ---------- */
+.txn-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.txn-scroll { overflow-x: auto; }
+
+.txn-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.txn-table th {
+    text-align: left;
+    color: var(--ink-muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.txn-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--ink-soft);
+}
+
+.txn-table tr:last-child td { border-bottom: none; }
+
+.txn-table tbody tr:hover { background: var(--paper-warm); }
+
+.txn-amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    font-weight: 500;
+}
+
+th.txn-amount { color: var(--ink-muted); font-weight: 500; }
+
+/* ---------- Category badges ---------- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.badge [data-lucide] { width: 13px; height: 13px; }
+
+.badge-food { background: var(--cat-food); color: var(--cat-food-ink); }
+.badge-transport { background: var(--cat-transport); color: var(--cat-transport-ink); }
+.badge-bills { background: var(--cat-bills); color: var(--cat-bills-ink); }
+.badge-health { background: var(--cat-health); color: var(--cat-health-ink); }
+.badge-entertainment { background: var(--cat-entertainment); color: var(--cat-entertainment-ink); }
+.badge-shopping { background: var(--cat-shopping); color: var(--cat-shopping-ink); }
+.badge-other { background: var(--cat-other); color: var(--cat-other-ink); }
+
+/* ---------- Category breakdown ---------- */
+.breakdown-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.breakdown-row { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.breakdown-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+}
+
+.breakdown-amount {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    font-weight: 500;
+}
+
+.bar {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--paper-warm);
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+}
+
+/* Width-step utility classes — avoids inline styles for the hardcoded values. */
+.bar-w-10 { width: 10%; }
+.bar-w-20 { width: 20%; }
+.bar-w-25 { width: 25%; }
+.bar-w-35 { width: 35%; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .profile-stats { grid-template-columns: 1fr; }
+    .profile-card { flex-direction: column; text-align: center; }
+}
