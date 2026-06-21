@@ -24,7 +24,7 @@ def test_post_valid_logs_in_and_redirects(client):
         follow_redirects=False,
     )
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
 
     with client.session_transaction() as sess:
         assert sess["user_id"] == user_id
@@ -74,7 +74,7 @@ def test_email_normalized_on_login(client):
         follow_redirects=False,
     )
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
 
 
 def test_logout_clears_session_and_redirects(client):
@@ -91,13 +91,13 @@ def test_logout_clears_session_and_redirects(client):
 
 
 def test_logged_in_user_redirected_from_login(client):
-    # A signed-in user visiting /login is bounced to the landing page.
+    # A signed-in user visiting /login is bounced to their profile page.
     with client.session_transaction() as sess:
         sess["user_id"] = 1
         sess["name"] = "Test User"
     resp = client.get("/login", follow_redirects=False)
     assert resp.status_code == 302
-    assert resp.headers["Location"].endswith("/")
+    assert resp.headers["Location"].endswith("/profile")
 
 
 def test_navbar_reflects_session(client):
