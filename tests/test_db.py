@@ -174,3 +174,155 @@ def test_fk_enforced_bad_user_id(seeded_db):
             conn.commit()
     finally:
         conn.close()
+
+
+# ------------------------------------------------------------------ #
+# Step 5 profile-data helpers                                         #
+# ------------------------------------------------------------------ #
+
+def test_get_user_by_id_valid(seeded_db):
+    user = seeded_db.get_user_by_id(1)
+    assert user is not None
+    assert user["email"] == "demo@spendly.com"
+
+
+def test_get_user_by_id_missing(test_db):
+    assert test_db.get_user_by_id(999) is None
+
+
+def test_get_recent_expenses_returns_all_newest_first(seeded_db):
+    rows = seeded_db.get_recent_expenses(1)
+    assert len(rows) == 8
+    # Newest date first (day 22), oldest last (day 3).
+    assert rows[0]["description"] == "Coffee and snack"
+    assert rows[-1]["description"] == "Lunch at cafe"
+    dates = [r["date"] for r in rows]
+    assert dates == sorted(dates, reverse=True)
+
+
+def test_get_recent_expenses_respects_limit(seeded_db):
+    rows = seeded_db.get_recent_expenses(1, limit=3)
+    assert len(rows) == 3
+    assert rows[0]["description"] == "Coffee and snack"
+    dates = [r["date"] for r in rows]
+    assert dates == sorted(dates, reverse=True)
+
+
+def test_get_recent_expenses_empty_for_user_with_none(test_db):
+    user_id = test_db.create_user("No Spend", "nospend@spendly.com", "x")
+    assert test_db.get_recent_expenses(user_id) == []
+    assert test_db.get_recent_expenses(999) == []
+
+
+def test_get_recent_expenses_is_user_scoped(seeded_db):
+    other_id = seeded_db.create_user("Other", "other@spendly.com", "x")
+    conn = seeded_db.get_db()
+    try:
+        conn.execute(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (other_id, 5.0, "Food", "2026-06-30", "other user expense"),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    demo_rows = seeded_db.get_recent_expenses(1)
+    assert len(demo_rows) == 8
+    assert all(r["user_id"] == 1 for r in demo_rows)
+
+    other_rows = seeded_db.get_recent_expenses(other_id)
+    assert len(other_rows) == 1
+    assert all(r["user_id"] == other_id for r in other_rows)
+
+
+def test_get_expense_summary_seeded_user(seeded_db):
+    summary = seeded_db.get_expense_summary(1)
+    assert summary["total"] == pytest.approx(274.84)
+    assert summary["count"] == 8
+    assert summary["top_category"] == "Bills"
+
+
+def test_get_expense_summary_no_expenses(test_db):
+    user_id = test_db.create_user("Empty", "empty@spendly.com", "x")
+    summary = test_db.get_expense_summary(user_id)
+    assert summary["total"] == pytest.approx(0)
+    assert summary["count"] == 0
+    assert summary["top_category"] is None
+
+    missing = test_db.get_expense_summary(999)
+    assert missing == {"total": 0, "count": 0, "top_category": None}
+
+
+def test_get_expense_summary_per_user_isolation(seeded_db):
+    other_id = seeded_db.create_user("Other", "other@spendly.com", "x")
+    conn = seeded_db.get_db()
+    try:
+        conn.executemany(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [
+                (other_id, 100.00, "Transport", "2026-06-01", "Flight"),
+                (other_id, 5.00, "Food", "2026-06-02", "Snack"),
+            ],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    other = seeded_db.get_expense_summary(other_id)
+    assert other["total"] == pytest.approx(105.00)
+    assert other["count"] == 2
+    assert other["top_category"] == "Transport"
+
+    seeded = seeded_db.get_expense_summary(1)
+    assert seeded["total"] == pytest.approx(274.84)
+    assert seeded["count"] == 8
+    assert seeded["top_category"] == "Bills"
+
+
+def test_category_breakdown_seeded_user(seeded_db):
+    breakdown = seeded_db.get_category_breakdown(1)
+    assert len(breakdown) == 7
+    assert breakdown[0]["category"] == "Bills"
+    assert breakdown[0]["total"] == pytest.approx(85.20)
+    food = next(b for b in breakdown if b["category"] == "Food")
+    assert food["total"] == pytest.approx(20.90)
+    totals = [b["total"] for b in breakdown]
+    assert totals == sorted(totals, reverse=True)
+
+
+def test_category_breakdown_expected_order(seeded_db):
+    breakdown = seeded_db.get_category_breakdown(1)
+    categories = [b["category"] for b in breakdown]
+    assert categories == [
+        "Bills", "Shopping", "Transport", "Health", "Other", "Food", "Entertainment",
+    ]
+
+
+def test_category_breakdown_no_expenses(test_db):
+    user_id = test_db.create_user("Empty", "empty@spendly.com", "x")
+    assert test_db.get_category_breakdown(user_id) == []
+    assert test_db.get_category_breakdown(999) == []
+
+
+def test_category_breakdown_per_user_isolation(seeded_db):
+    other_id = seeded_db.create_user("Other", "other@spendly.com", "x")
+    conn = seeded_db.get_db()
+    try:
+        conn.executemany(
+            "INSERT INTO expenses (user_id, amount, category, date, description) "
+            "VALUES (?, ?, ?, ?, ?)",
+            [
+                (other_id, 5.00, "Food", "2026-06-01", "snack"),
+                (other_id, 100.00, "Transport", "2026-06-02", "flight"),
+            ],
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    breakdown = seeded_db.get_category_breakdown(other_id)
+    assert [b["category"] for b in breakdown] == ["Transport", "Food"]
+    assert breakdown[0]["total"] == pytest.approx(100.00)
+    assert breakdown[1]["total"] == pytest.approx(5.00)

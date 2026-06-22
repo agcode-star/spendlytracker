@@ -144,3 +144,85 @@ def create_user(name, email, password_hash):
         return cur.lastrowid
     finally:
         conn.close()
+
+
+def get_user_by_id(user_id):
+    """Return the user row for an id, or None if no such user exists."""
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT * FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def get_recent_expenses(user_id, limit=10):
+    """Return a user's most recent expenses, newest first.
+
+    Read-only. Orders by date descending, then id descending so same-day rows
+    are tie-broken by insertion order. Returns at most `limit` rows and an empty
+    list when the user has no expenses.
+    """
+    conn = get_db()
+    try:
+        return conn.execute(
+            "SELECT * FROM expenses WHERE user_id = ? "
+            "ORDER BY date DESC, id DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def get_expense_summary(user_id):
+    """Return summary stats for a user's expenses as a dict.
+
+    Read-only. Aggregates the user's expenses into:
+        total        — sum of all amounts (0 when the user has none)
+        count        — number of expense rows
+        top_category — category with the largest summed amount, or None
+
+    SUM() returns NULL for an empty set, so COALESCE guards total back to 0.
+    """
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count "
+            "FROM expenses WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+
+        top = conn.execute(
+            "SELECT category FROM expenses WHERE user_id = ? "
+            "GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1",
+            (user_id,),
+        ).fetchone()
+
+        return {
+            "total": row["total"],
+            "count": row["count"],
+            "top_category": top["category"] if top is not None else None,
+        }
+    finally:
+        conn.close()
+
+
+def get_category_breakdown(user_id):
+    """Return per-category expense totals for a user, highest total first.
+
+    Yields one dict per category the user actually has expenses in:
+    ``[{"category": <str>, "total": <float>}, ...]``. Returns an empty list
+    when the user has no expenses. The view layer handles percentages and
+    currency formatting — this is the raw summed total.
+    """
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            "SELECT category, SUM(amount) AS total FROM expenses "
+            "WHERE user_id = ? GROUP BY category ORDER BY SUM(amount) DESC",
+            (user_id,),
+        ).fetchall()
+        return [{"category": row["category"], "total": row["total"]} for row in rows]
+    finally:
+        conn.close()

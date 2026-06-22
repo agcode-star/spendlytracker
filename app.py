@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,43 +11,45 @@ from database.db import (
     seed_db,
     get_user_by_email,
     create_user,
+    get_user_by_id,
+    get_recent_expenses,
+    get_expense_summary,
+    get_category_breakdown,
 )
 
 # Basic email shape check — not full RFC validation, just a sanity gate.
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+
 # ------------------------------------------------------------------ #
-# Hardcoded profile data (Step 4 — UI only).                          #
-# Step 5 will replace these constants with real queries via get_db(). #
+# Profile presentation helpers — format raw DB values for the view.   #
 # ------------------------------------------------------------------ #
-PROFILE_USER = {
-    "name": "Demo User",
-    "email": "demo@spendly.com",
-    "initials": "DU",
-    "member_since": "June 2026",
-}
+def _format_amount(value):
+    """Render a numeric amount as a ₹-prefixed, comma-grouped string."""
+    return f"₹{(value or 0):,.2f}"
 
-PROFILE_STATS = [
-    {"label": "Total spent", "value": "₹12,480"},
-    {"label": "Transactions", "value": "24"},
-    {"label": "Top category", "value": "Food"},
-]
 
-PROFILE_TRANSACTIONS = [
-    {"date": "2026-06-18", "description": "Lunch at cafe", "category": "Food", "slug": "food", "amount": "₹420"},
-    {"date": "2026-06-16", "description": "Metro pass", "category": "Transport", "slug": "transport", "amount": "₹1,200"},
-    {"date": "2026-06-14", "description": "Electricity bill", "category": "Bills", "slug": "bills", "amount": "₹2,150"},
-    {"date": "2026-06-11", "description": "Pharmacy", "category": "Health", "slug": "health", "amount": "₹680"},
-    {"date": "2026-06-08", "description": "Movie night", "category": "Entertainment", "slug": "entertainment", "amount": "₹560"},
-]
+def _initials(name):
+    """Derive avatar initials from a name (first + last word, uppercased)."""
+    parts = (name or "").split()
+    if not parts:
+        return "?"
+    if len(parts) == 1:
+        return parts[0][0].upper()
+    return (parts[0][0] + parts[-1][0]).upper()
 
-PROFILE_CATEGORY_BREAKDOWN = [
-    {"name": "Food", "slug": "food", "amount": "₹4,200", "percent": 35},
-    {"name": "Bills", "slug": "bills", "amount": "₹3,100", "percent": 25},
-    {"name": "Transport", "slug": "transport", "amount": "₹2,400", "percent": 20},
-    {"name": "Health", "slug": "health", "amount": "₹1,500", "percent": 10},
-    {"name": "Entertainment", "slug": "entertainment", "amount": "₹1,280", "percent": 10},
-]
+
+def _member_since(created_at):
+    """Format a users.created_at timestamp as 'Month YYYY'."""
+    if not created_at:
+        return ""
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(created_at[:len(fmt) + 2], fmt).strftime("%B %Y")
+        except ValueError:
+            continue
+    return ""
+
 
 app = Flask(__name__)
 
@@ -142,15 +145,64 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    if not session.get("user_id"):
+    user_id = session.get("user_id")
+    if not user_id:
         return redirect(url_for("login"))
+
+    user_row = get_user_by_id(user_id)
+    if user_row is None:
+        # Session points at a user that no longer exists — treat as logged out.
+        session.clear()
+        return redirect(url_for("login"))
+
+    summary = get_expense_summary(user_id)
+    expense_rows = get_recent_expenses(user_id)
+    breakdown = get_category_breakdown(user_id)
+
+    user = {
+        "name": user_row["name"],
+        "email": user_row["email"],
+        "initials": _initials(user_row["name"]),
+        "member_since": _member_since(user_row["created_at"]),
+    }
+
+    stats = [
+        {"label": "Total spent", "value": _format_amount(summary["total"])},
+        {"label": "Transactions", "value": str(summary["count"])},
+        {"label": "Top category", "value": summary["top_category"] or "—"},
+    ]
+
+    transactions = [
+        {
+            "date": row["date"],
+            "description": row["description"],
+            "category": row["category"],
+            "slug": row["category"].lower(),
+            "amount": _format_amount(row["amount"]),
+        }
+        for row in expense_rows
+    ]
+
+    total = summary["total"] or 0
+    categories = []
+    for row in breakdown:
+        share = (row["total"] / total * 100) if total else 0
+        percent = int(round(share / 5) * 5)  # nearest 5 → maps to a .bar-w-NN class
+        categories.append(
+            {
+                "name": row["category"],
+                "slug": row["category"].lower(),
+                "amount": _format_amount(row["total"]),
+                "percent": percent,
+            }
+        )
 
     return render_template(
         "profile.html",
-        user=PROFILE_USER,
-        stats=PROFILE_STATS,
-        transactions=PROFILE_TRANSACTIONS,
-        categories=PROFILE_CATEGORY_BREAKDOWN,
+        user=user,
+        stats=stats,
+        transactions=transactions,
+        categories=categories,
     )
 
 
